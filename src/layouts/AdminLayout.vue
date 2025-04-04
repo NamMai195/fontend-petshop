@@ -10,9 +10,9 @@
 </template>
 
 <script setup>
-import AdminHeader from '@/components/Layout/Admin/AdminHeader.vue';
-import AdminSidebar from '@/components/Layout/Admin/AdminSidebar.vue';
-import AdminFooter from '@/components/Layout/Admin/AdminFooter.vue';
+import AdminHeader from '@/components/layout/admin/AdminHeader.vue';
+import AdminSidebar from '@/components/layout/admin/AdminSidebar.vue';
+import AdminFooter from '@/components/layout/admin/AdminFooter.vue';
 </script>
 
 <style>

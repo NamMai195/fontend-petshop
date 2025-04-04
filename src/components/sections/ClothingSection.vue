@@ -56,7 +56,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
-import ProductCard from '../UI/ProductCard.vue';
+import ProductCard from '@/components/common/ProductCard.vue';
 
 // --- State ---
 const products = ref([]);

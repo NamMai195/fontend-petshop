@@ -5,26 +5,26 @@ import { jwtDecode } from 'jwt-decode';
 import AdminLayout from '@/layouts/AdminLayout.vue'; // Import layout Admin
 
 // --- View Imports ---
-const HomePage = () => import('@/views/HomePage.vue');
-const ShopPage = () => import('@/views/ShopPage.vue');
-const ProductDetailPage = () => import('@/views/ProductDetailPage.vue');
-const CategoryProductsPage = () => import('@/views/CategoryProductsPage.vue');
-const BlogPage = () => import('@/views/BlogPage.vue');
-const BlogPostDetailPage = () => import('@/views/BlogPostDetailPage.vue');
-const ContactPage = () => import('@/views/ContactPage.vue');
-const AboutPage = () => import('@/views/AboutPage.vue');
-const CartPage = () => import('@/views/CartPage.vue');
-const WishlistPage = () => import('@/views/WishlistPage.vue');
-const CheckoutPage = () => import('@/views/CheckoutPage.vue');
-const FaqPage = () => import('@/views/FaqPage.vue');
-const AccountPage = () => import('@/views/AccountPage.vue');
-const NotFoundPage = () => import('@/views/NotFoundPage.vue');
-const LoginPage = () => import('@/views/LoginPage.vue');
-const RegisterPage = () => import('@/views/RegisterPage.vue');
-const SetPasswordPage = () => import('@/views/SetPasswordPage.vue');
-const ChangePassword = () => import('@/views/ChangePasswordPage.vue');
-const MyOrdersPlaceholderPage = () => import('@/views/MyOrdersPlaceholderPage.vue');
-const OrderDetailPage = () => import('@/views/OrderDetailPage.vue'); // Đã có OrderDetailPage
+const HomePage = () => import('@/views/home/HomePage.vue');
+const ShopPage = () => import('@/views/products/ShopPage.vue');
+const ProductDetailPage = () => import('@/views/products/ProductDetailPage.vue');
+const CategoryProductsPage = () => import('@/views/products/CategoryProductsPage.vue');
+const BlogPage = () => import('@/views/blog/BlogPage.vue');
+const BlogPostDetailPage = () => import('@/views/blog/BlogPostDetailPage.vue');
+const ContactPage = () => import('@/views/static/ContactPage.vue');
+const AboutPage = () => import('@/views/static/AboutPage.vue');
+const CartPage = () => import('@/views/cart/CartPage.vue');
+const WishlistPage = () => import('@/views/cart/WishlistPage.vue');
+const CheckoutPage = () => import('@/views/cart/CheckoutPage.vue');
+const FaqPage = () => import('@/views/static/FaqPage.vue');
+const AccountPage = () => import('@/views/account/AccountPage.vue');
+const NotFoundPage = () => import('@/views/static/NotFoundPage.vue');
+const LoginPage = () => import('@/views/auth/LoginPage.vue');
+const RegisterPage = () => import('@/views/auth/RegisterPage.vue');
+const SetPasswordPage = () => import('@/views/auth/SetPasswordPage.vue');
+const ChangePassword = () => import('@/views/auth/ChangePasswordPage.vue');
+const MyOrdersPlaceholderPage = () => import('@/views/orders/MyOrdersPlaceholderPage.vue');
+const OrderDetailPage = () => import('@/views/orders/OrderDetailPage.vue');
 
 // Admin Views
 const AdminDashboardPage = () => import('@/views/admin/AdminDashboardPage.vue');
@@ -121,7 +121,7 @@ const routes = [
    {
     path: '/order/:orderId',
     name: 'orderDetails',
-    component: OrderDetailPage, // Đảm bảo component này đã import ở trên
+    component: OrderDetailPage,
     props: true,
     meta: { requiresAuth: true }
   },

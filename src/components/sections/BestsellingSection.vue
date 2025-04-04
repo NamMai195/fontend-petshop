@@ -45,7 +45,7 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue';
 import axios from 'axios';
-import ProductCard from '../UI/ProductCard.vue'; // Đường dẫn tới ProductCard component
+import ProductCard from '@/components/common/ProductCard.vue'; // Đường dẫn tới ProductCard component
 
 // --- State Variables ---
 const products = ref([]); // Holds the array of products from API

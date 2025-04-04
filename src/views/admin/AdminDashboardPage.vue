@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import DashboardStatCard from '@/components/Layout/Admin/DashboardStatCard.vue';
+import DashboardStatCard from '@/components/layout/admin/DashboardStatCard.vue';
 
 const statsData = ref([
   {

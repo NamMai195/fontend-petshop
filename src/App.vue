@@ -26,11 +26,11 @@ import { useRoute } from 'vue-router'; // Import useRoute
 import { useAuthStore } from '@/stores/authStore'; // Đảm bảo đường dẫn đúng
 
 // Import các component layout như cũ
-import TheHeader from '@/components/Layout/TheHeader.vue';
-import TheFooter from '@/components/Layout/TheFooter.vue';
-import Preloader from '@/components/UI/Preloader.vue';
-import OffcanvasCart from '@/components/UI/OffcanvasCart.vue';
-import OffcanvasSearch from '@/components/UI/OffcanvasSearch.vue';
+import TheHeader from '@/components/layout/TheHeader.vue';
+import TheFooter from '@/components/layout/TheFooter.vue';
+import Preloader from '@/components/common/Preloader.vue';
+import OffcanvasCart from '@/components/common/OffcanvasCart.vue';
+import OffcanvasSearch from '@/components/common/OffcanvasSearch.vue';
 
 // *** KHỞI TẠO AUTH STORE ***
 const authStore = useAuthStore();

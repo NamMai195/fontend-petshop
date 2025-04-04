@@ -67,7 +67,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import ProductCard from '../UI/ProductCard.vue';
+import ProductCard from '@/components/common/ProductCard.vue';
 
 const products = ref([]);
 const loading = ref(false);

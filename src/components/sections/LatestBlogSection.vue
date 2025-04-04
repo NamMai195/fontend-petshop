@@ -46,7 +46,7 @@ import { ref, onMounted } from 'vue';
 import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 // QUAN TRỌNG: Đảm bảo đường dẫn đến file config Firebase đúng
 import { db } from '@/firebase/config';
-import BlogPostCard from '../UI/BlogPostCard.vue';
+import BlogPostCard from '@/components/common/BlogPostCard.vue';
 
 const posts = ref([]);
 const loading = ref(true);
