@@ -86,7 +86,7 @@ src/
 5. Tạo Pull Request
 
 ## Tác giả
-[Tên của bạn]
+NamMai195
 
 ## License
 MIT
