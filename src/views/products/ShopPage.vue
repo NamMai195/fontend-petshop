@@ -90,7 +90,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-import ProductCard from '../components/UI/ProductCard.vue'; // Đảm bảo đường dẫn đúng
+import ProductCard from '@/components/common/ProductCard.vue';
 
 const products = ref([]);
 const parentCategories = ref([]);

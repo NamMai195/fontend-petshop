@@ -1,31 +1,38 @@
 <template>
-  <VCard>
+  <VCard :class="cardClass">
     <VCardText>
       <div class="d-flex justify-space-between align-center">
-        <div>
+        <div class="stat-content">
           <span class="text-sm text-disabled">{{ title }}</span>
           <div class="d-flex align-center gap-2">
-            <h6 class="text-h6">
+            <h6 class="text-h6 mb-0">
               {{ stats }}
             </h6>
             <span
-              :class="change >= 0 ? 'text-success' : 'text-error'"
-              class="text-sm"
+              v-if="showChange"
+              :class="[
+                change >= 0 ? 'text-success' : 'text-error',
+                'text-sm font-weight-medium'
+              ]"
             >
               {{ change >= 0 ? '+' : '' }}{{ change }}%
             </span>
           </div>
+          <span v-if="subtitle" class="text-xs text-medium-emphasis">{{ subtitle }}</span>
         </div>
 
         <VAvatar
           :color="color"
+          :class="iconClass"
           variant="tonal"
           size="42"
         >
           <VImg
+            v-if="image"
             :src="image"
             :alt="title"
           />
+          <VIcon v-else :icon="icon" />
         </VAvatar>
       </div>
     </VCardText>
@@ -33,26 +40,62 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     required: true,
   },
   stats: {
-    type: String,
+    type: [String, Number],
     required: true,
   },
   change: {
     type: Number,
-    required: true,
+    default: null,
   },
   image: {
     type: String,
-    required: true,
+    default: null,
+  },
+  icon: {
+    type: String,
+    default: null,
   },
   color: {
     type: String,
     default: 'primary',
   },
+  subtitle: {
+    type: String,
+    default: '',
+  },
+  cardClass: {
+    type: String,
+    default: '',
+  },
+  iconClass: {
+    type: String,
+    default: '',
+  }
 })
-</script> 
+
+const showChange = computed(() => props.change !== null)
+</script>
+
+<style scoped>
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.text-h6 {
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+</style>
