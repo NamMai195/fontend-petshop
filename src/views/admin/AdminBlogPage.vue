@@ -171,8 +171,9 @@
                   v-model="formData.image"
                   label="Featured Image"
                   accept="image/*"
-                  :rules="[v => !!v || 'Image is required']"
-                  required
+                  :rules="imageRules"
+                  :hint="isEditing ? 'Leave empty to keep current image' : 'Select an image for the blog post'"
+                  persistent-hint
                   @change="handleFileChange"
                 />
               </VCol>
@@ -248,7 +249,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import blogApiService from '@/api/blog';
 
@@ -375,13 +376,34 @@ const handleSubmit = async () => {
   saving.value = true;
   try {
     if (isEditing.value) {
+      // Create update data object with only changed fields
+      const updateData = {};
+      
+      // Compare and only include changed fields
+      if (formData.value.title !== selectedPost.value.title) {
+        updateData.title = formData.value.title;
+      }
+      if (formData.value.author !== selectedPost.value.author) {
+        updateData.author = formData.value.author;
+      }
+      if (formData.value.content !== selectedPost.value.content) {
+        updateData.content = formData.value.content;
+      }
+      if (formData.value.status !== selectedPost.value.status) {
+        updateData.status = formData.value.status;
+      }
+
+      // Only include image if a new one is selected
+      const imageFile = formData.value.image || null;
+      
       await blogApiService.updatePost(
         selectedPost.value.id,
-        formData.value,
-        formData.value.image
+        updateData,
+        imageFile
       );
       toast.success('Blog post updated successfully');
     } else {
+      // For new posts, require all fields including image
       await blogApiService.createPost(formData.value, formData.value.image);
       toast.success('Blog post created successfully');
     }
@@ -417,6 +439,14 @@ const handleDelete = async () => {
 const resetFilters = () => {
   searchQuery.value = '';
 };
+
+// Computed properties
+const imageRules = computed(() => {
+  if (isEditing.value) {
+    return []; // No validation rules when editing
+  }
+  return [v => !!v || 'Image is required']; // Required for new posts
+});
 
 // Cleanup on unmount
 onMounted(() => {

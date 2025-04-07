@@ -2,7 +2,7 @@
   <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" persistent max-width="700px">
     <v-card>
       <v-card-title>
-        <span class="text-h5">{{ isEditing ? 'Edit Blog Post' : 'Add New Blog Post' }}</span>
+        <span class="text-h5">{{ isEditing ? 'Edit Blog Postttt' : 'Add New Blog Post' }}</span>
       </v-card-title>
 
       <v-card-text>
@@ -57,6 +57,8 @@
                     density="compact"
                     show-size
                     clearable
+                    :hint="isEditing ? 'Leave empty to keep current image' : ''"
+                    persistent-hint
                     @change="previewImage"
                     @click:clear="clearPreview"
                   ></v-file-input>
@@ -104,10 +106,10 @@ const emit = defineEmits(['update:modelValue', 'save']);
 // Form refs and validation rules
 const formRef = ref(null);
 const rules = {
-  title: [v => isEditing.value || (!!v && v.length > 0) || 'Title is required'],
-  author: [v => isEditing.value || (!!v && v.length > 0) || 'Author is required'],
-  content: [v => isEditing.value || (!!v && v.length > 0) || 'Content is required'],
-  status: [v => isEditing.value || (!!v && v.length > 0) || 'Status is required'],
+  title: [v => (!!v && v.length > 0) || 'Title is required'],
+  author: [v => (!!v && v.length > 0) || 'Author is required'],
+  content: [v => (!!v && v.length > 0) || 'Content is required'],
+  status: [v => (!!v && v.length > 0) || 'Status is required']
 };
 
 // Form data
@@ -186,34 +188,47 @@ const closeDialog = () => {
 };
 
 const savePost = async () => {
-  if (!isEditing.value && !(await formRef.value.validate())) {
+  const isValid = await formRef.value.validate();
+  if (!isValid) {
     return;
   }
 
   isSaving.value = true;
   try {
     if (isEditing.value) {
-      // Khi edit, chỉ gửi các trường đã được điền
-      const updateData = {};
-      if (editablePost.value.title) updateData.title = editablePost.value.title;
-      if (editablePost.value.author) updateData.author = editablePost.value.author;
-      if (editablePost.value.content) updateData.content = editablePost.value.content;
-      if (editablePost.value.status) updateData.status = editablePost.value.status;
+      // Create a copy of the original post
+      const updateData = { ...props.post };
       
-      // Emit save event with post data and image file
-      emit('save', {
-        postData: updateData,
-        imageFile: selectedImageFile.value
-      });
+      // Update only changed fields
+      updateData.title = editablePost.value.title;
+      updateData.author = editablePost.value.author;
+      updateData.content = editablePost.value.content;
+      updateData.status = editablePost.value.status;
+      
+      // Handle image separately
+      if (selectedImageFile.value) {
+        // New image selected
+        emit('save', {
+          postData: updateData,
+          imageFile: selectedImageFile.value,
+          keepExistingImage: false
+        });
+      } else {
+        // No new image, keep existing one if any
+        emit('save', {
+          postData: updateData,
+          imageFile: null,
+          keepExistingImage: true
+        });
+      }
     } else {
-      // Khi tạo mới, yêu cầu đầy đủ thông tin
-      // Emit save event with post data and image file
+      // For new posts
       emit('save', {
         postData: editablePost.value,
-        imageFile: selectedImageFile.value
+        imageFile: selectedImageFile.value,
+        keepExistingImage: false
       });
     }
-    // Close dialog
     closeDialog();
   } catch (error) {
     console.error('Error saving post:', error);
