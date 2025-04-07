@@ -3,6 +3,29 @@
     <div class="card shadow-lg" style="width: 100%; max-width: 450px;">
       <div class="card-body p-4 p-md-5">
         <h2 class="card-title text-center mb-4">Đăng nhập</h2>
+
+        <!-- Nút đăng nhập và đăng ký bằng Google -->
+        <div class="d-grid gap-3 mb-4">
+          <button
+            type="button"
+            class="btn btn-outline-danger btn-lg d-flex align-items-center justify-content-center gap-2"
+            @click="handleGoogleLogin"
+            :disabled="loading"
+          >
+            <img 
+              src="https://www.google.com/favicon.ico" 
+              alt="Google"
+              style="width: 20px; height: 20px;"
+            />
+            <span>Đăng ký đăng nhập bằng Google</span>
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider d-flex align-items-center my-4">
+          <p class="text-center fw-bold mx-3 mb-0 text-muted">HOẶC</p>
+        </div>
+
         <form @submit.prevent="handleLogin">
           <div v-if="error" class="alert alert-danger small p-2 mb-3" role="alert">
             {{ error }}
@@ -19,7 +42,7 @@
               :disabled="loading" aria-describedby="usernameHelp"
             >
             <label for="username">Tên đăng nhập</label>
-            </div>
+          </div>
 
           <div class="form-floating mb-4">
             <input
@@ -46,7 +69,7 @@
 
         <div class="text-center mt-4">
           <p class="small">Chưa có tài khoản? <router-link :to="{ name: 'register' }">Đăng ký ngay</router-link></p>
-           </div>
+        </div>
 
       </div>
     </div>
@@ -54,73 +77,136 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'; // Thêm computed
+import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-// *** BỎ IMPORT KHÔNG CẦN THIẾT ***
-// import axios from 'axios';
-// import { jwtDecode } from 'jwt-decode';
-// *** IMPORT AUTH STORE ***
-import { useAuthStore } from '@/stores/authStore'; // Đảm bảo đường dẫn đúng
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
 const route = useRoute();
-// *** KHỞI TẠO AUTH STORE ***
 const authStore = useAuthStore();
 
 const username = ref('');
 const password = ref('');
+const googleLoading = ref(false);
 
-// *** SỬ DỤNG STATE TỪ STORE ***
-// Lấy trạng thái loading và error từ store qua computed properties
 const loading = computed(() => authStore.status === 'loading');
-const error = computed(() => authStore.error); // error message sẽ được quản lý bởi store
+const error = computed(() => authStore.error);
 
-// *** BỎ API CLIENT CỤC BỘ (STORE SẼ GỌI API) ***
-// const apiClient = axios.create({...});
-
-// *** SỬA HÀM LOGIN ĐỂ GỌI ACTION CỦA STORE ***
 const handleLogin = async () => {
-  // Không cần set loading/error ở đây nữa, store action sẽ làm
-
-  // Gọi action login từ store
   const success = await authStore.login({
     username: username.value,
     password: password.value,
   });
 
   if (success) {
-    // Đăng nhập thành công (store đã lưu token và user info)
     console.log('[LoginPage] Login action successful.');
-    // Thực hiện điều hướng sau khi đăng nhập thành công
     try {
-        // Lấy vai trò từ store (đã được cập nhật sau khi login thành công)
-        const isAdmin = authStore.isAdmin; // Sử dụng getter từ store
+      const isAdmin = authStore.isAdmin;
 
-        if (isAdmin) {
-            console.log('[LoginPage] Redirecting to admin dashboard...');
-            await router.push({ name: 'admin-dashboard' });
-        } else {
-            const targetPath = route.query.redirect || '/'; // Lấy redirect path từ URL hoặc về trang chủ
-            console.log(`[LoginPage] Redirecting to: ${targetPath}`);
-            await router.push(targetPath);
-        }
+      if (isAdmin) {
+        console.log('[LoginPage] Redirecting to admin dashboard...');
+        await router.push({ name: 'admin-dashboard' });
+      } else {
+        const targetPath = route.query.redirect || '/';
+        console.log(`[LoginPage] Redirecting to: ${targetPath}`);
+        await router.push(targetPath);
+      }
     } catch (navError) {
-       console.error("[LoginPage] Lỗi điều hướng sau khi đăng nhập:", navError);
-       // Hiển thị lỗi nếu không điều hướng được (mặc dù đăng nhập thành công)
-       // authStore.error = "Đăng nhập OK nhưng không thể chuyển trang."; // Có thể cập nhật lỗi vào store
+      console.error("[LoginPage] Lỗi điều hướng sau khi đăng nhập:", navError);
     }
   } else {
-     // Đăng nhập thất bại
-     // Không cần làm gì thêm ở đây vì `error` computed đã tự động cập nhật
-     // từ `authStore.error` được set trong action login thất bại.
-     console.log('[LoginPage] Login action failed.');
+    console.log('[LoginPage] Login action failed.');
   }
+};
+
+// Hàm xử lý đăng nhập Google
+const handleGoogleLogin = () => {
+  // Điều hướng đến endpoint OAuth2 của backend
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const redirectUri = encodeURIComponent(window.location.origin + '/logincallback');
+  
+  window.location.href = `${backendUrl}/oauth2/authorization/google?redirect_uri=${redirectUri}`;
+};
+
+// Hàm chuyển hướng đến trang đăng ký
+const goToRegister = () => {
+  router.push({ name: 'register' });
 };
 </script>
 
 <style scoped>
-/* Style giữ nguyên */
 .login-page {
-  background-color: #f8f9fa; /* Thêm màu nền nhẹ nhàng */
+  background-color: #f8f9fa;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.form-control {
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #ddd;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  border-color: #86b7fe;
+}
+
+.btn {
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background-color: rgb(222, 173, 111);
+  border: none;
+  box-shadow: 0 4px 6px rgb(222, 173, 111)
+}
+
+.btn-primary:hover {
+  background-color: rgb(222, 173, 111)7;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgb(222, 173, 111)
+}
+
+.divider:after,
+.divider:before {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+
+.alert {
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
 }
 </style>

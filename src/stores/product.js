@@ -1,8 +1,6 @@
 // src/stores/product.js
 import { defineStore } from 'pinia';
-// Import các hàm gọi API (bạn cần tạo file này như hướng dẫn trước)
-import { getAllProducts, getProductById } from '@/api/products';
-// Import thêm các hàm API khác nếu cần (createProduct, updateProduct,...)
+import axios from '@/plugins/axios';
 
 export const useProductStore = defineStore('product', {
   // State: chứa dữ liệu của store
@@ -27,31 +25,20 @@ export const useProductStore = defineStore('product', {
       this.loading = true;
       this.error = null;
       try {
-        // Gọi hàm API từ src/api/products.js
-        const responseData = await getAllProducts({
-           // page: this.pagination.page, // Gửi thông tin trang nếu cần
-           // size: this.pagination.size,
-           ...params // Gửi các tham số lọc khác (categoryId, keyword...)
-        });
-
-        // Xử lý dữ liệu trả về từ API
-        if (Array.isArray(responseData)) { // Nếu API chỉ trả về mảng sản phẩm
-          this.products = responseData;
-        } else if (responseData && typeof responseData === 'object' && Array.isArray(responseData.content)) {
-          // Nếu API trả về có phân trang (giống cấu trúc Page trong Spring Boot)
-          this.products = responseData.content;
-          this.pagination.page = responseData.number;
-          this.pagination.size = responseData.size;
-          this.pagination.totalPages = responseData.totalPages;
-          this.pagination.totalElements = responseData.totalElements;
+        const response = await axios.get('/api/v1/products', { params });
+        if (response.data && typeof response.data === 'object' && Array.isArray(response.data.content)) {
+          this.products = response.data.content;
+          this.pagination.page = response.data.number;
+          this.pagination.size = response.data.size;
+          this.pagination.totalPages = response.data.totalPages;
+          this.pagination.totalElements = response.data.totalElements;
         } else {
-          console.warn("Unexpected response format for fetchProducts:", responseData);
-          this.products = []; // Đặt lại mảng rỗng nếu định dạng không đúng
+          console.warn("Unexpected response format for fetchProducts:", response.data);
+          this.products = [];
         }
-
       } catch (err) {
         this.error = err.message || 'Failed to fetch products';
-        this.products = []; // Xóa sản phẩm cũ nếu lỗi
+        this.products = [];
         console.error("Error in fetchProducts action:", err);
       } finally {
         this.loading = false;
@@ -64,8 +51,8 @@ export const useProductStore = defineStore('product', {
       this.error = null;
       this.productDetail = null;
       try {
-        // Gọi hàm API từ src/api/products.js
-        this.productDetail = await getProductById(productId);
+        const response = await axios.get(`/api/v1/products/${productId}`);
+        this.productDetail = response.data;
       } catch (err) {
         this.error = err.message || `Failed to fetch product ${productId}`;
         console.error("Error in fetchProductById action:", err);

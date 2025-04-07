@@ -6,13 +6,13 @@
       <OffcanvasSearch />
       <TheHeader />
       <main>
-        <router-view /> {/* Các trang user sẽ vào đây */}
+        <router-view />
       </main>
       <TheFooter />
     </template>
 
     <template v-else>
-      <router-view /> {/* AdminLayout sẽ vào đây */}
+      <router-view /> 
     </template>
   </div>
 </template>
@@ -48,9 +48,9 @@ const isAdminRoute = computed(() => {
 });
 
 // *** GỌI checkAuthStatus KHI APP MOUNT ***
-onMounted(() => {
-  console.log('[App.vue] Mounted. Checking auth status...');
-  authStore.checkAuthStatus();
+onMounted(async () => {
+  // Kiểm tra trạng thái đăng nhập khi tải trang
+  await authStore.checkAuth();
 });
 
 </script>

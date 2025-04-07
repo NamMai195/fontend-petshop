@@ -1,24 +1,33 @@
 // src/firebase/config.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getDatabase } from "firebase/database";
+import { getAnalytics } from "firebase/analytics";
 // ... các import khác nếu cần
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDsZi_QheKeYDR0WSqm6qF5QLbQUtJTXkc",
-    authDomain: "java-6-299a4.firebaseapp.com",
-    databaseURL: "https://java-6-299a4-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "java-6-299a4",
-    storageBucket: "java-6-299a4.firebasestorage.app",
-    messagingSenderId: "629274696356",
-    appId: "1:629274696356:web:cc902f183e718e54766431",
-    measurementId: "G-8XXEWYWH30"
-  };
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app); // **Phải có dòng export này**
+// Initialize services
+export const analytics = getAnalytics(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const rtdb = getDatabase(app);
+
+// Export the app instance as well
+export default app;
 
 // Export các service khác nếu cần (auth, storage,...)
 // export const auth = getAuth(app);

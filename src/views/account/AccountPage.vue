@@ -19,7 +19,7 @@
           <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Thông tin cá nhân</h5>
              <button v-if="!isEditing" @click="startEditing" class="btn btn-sm btn-outline-primary">
-                <iconify-icon icon="mdi:edit-outline" class="me-1"></iconify-icon>
+                <Icon icon="mdi:edit-outline" class="me-1" />
                 Chỉnh sửa
               </button>
           </div>
@@ -189,7 +189,9 @@ import { ref, onMounted, reactive, watch } from 'vue';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useToast } from 'vue-toastification';
-import { useRouter } from 'vue-router'; // Import useRouter
+import { useRouter } from 'vue-router';
+import { Icon } from '@iconify/vue';
+import { provinces } from '@/data/provinces';
 
 const user = ref(null);
 const loading = ref(true);
@@ -200,15 +202,8 @@ const editFormData = ref({ addresses: [] });
 const editLoading = ref(false);
 const editError = ref(null);
 
-// --- Removed password related refs/reactive objects ---
-// const passwordData = reactive({ password: '', confirmPassword: '' });
-// const passwordLoading = ref(false);
-// const passwordError = ref(null);
-// const passwordSuccess = ref(null);
-// ---
-
 const toast = useToast();
-const router = useRouter(); // Get router instance
+const router = useRouter();
 
 const addressModalRef = ref(null);
 let addressModalInstance = null;
@@ -220,7 +215,6 @@ const addressModalError = ref(null);
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 let currentUserId = null;
 
-const PROVINCE_API_HOST = "https://provinces.open-api.vn/api/";
 const provincesList = ref([]);
 const districtsList = ref([]);
 const wardsList = ref([]);
@@ -231,7 +225,6 @@ const selectedProvinceCode = ref(null);
 const selectedDistrictCode = ref(null);
 const selectedWardCode = ref(null);
 
-// --- getAuthApiClient function remains the same ---
 const getAuthApiClient = () => {
   const token = localStorage.getItem('accessToken');
   if (!token) {
@@ -273,7 +266,6 @@ const getAuthApiClient = () => {
   });
 };
 
-// --- fetchUserData function remains the same ---
 const fetchUserData = async (userId) => {
    if (!userId) {
         fetchError.value = "Không thể tải dữ liệu do thiếu thông tin người dùng.";
@@ -317,7 +309,6 @@ const fetchUserData = async (userId) => {
   }
 };
 
-// --- startEditing function remains the same ---
 const startEditing = () => {
   if (!user.value) return;
   // Deep clone user data for editing
@@ -330,14 +321,12 @@ const startEditing = () => {
   editError.value = null; // Clear previous edit errors
 };
 
-// --- cancelEditing function remains the same ---
 const cancelEditing = () => {
   isEditing.value = false;
   editError.value = null;
   // No need to reset editFormData, it will be overwritten on next edit start
 };
 
-// --- saveUserProfile function remains the same ---
 const saveUserProfile = async () => {
   if (!currentUserId || !editFormData.value) {
       editError.value = "Dữ liệu không hợp lệ để lưu.";
@@ -413,9 +402,6 @@ const saveUserProfile = async () => {
   }
 };
 
-// --- Removed changePassword function ---
-
-// --- Address Modal Functions (addNewAddress, updateAddress, removeAddress, setDefaultAddress) remain the same ---
 const addNewAddress = (newAddress) => {
     // Ensure the addresses array exists
     if (!Array.isArray(editFormData.value.addresses)) {
@@ -454,68 +440,89 @@ const setDefaultAddress = (index) => {
     }
 };
 
-
-// --- Province/District/Ward Fetching & Watching logic remains the same ---
 const fetchProvinces = async () => {
-  // Avoid refetching if list is already populated
   if (provincesList.value.length > 0 && !provincesLoading.value) return;
   provincesLoading.value = true;
-  addressModalError.value = null; // Clear previous modal errors
+  addressModalError.value = null;
   try {
-    const response = await axios.get(PROVINCE_API_HOST + "?depth=1");
-    provincesList.value = response.data || [];
+    // Use local data from provinces.js
+    provincesList.value = provinces.map(p => ({
+      code: p.code.toString(),
+      name: p.name
+    }));
   } catch (error) {
-    console.error("Fetch Provinces Error:", error);
-    addressModalError.value = "Lỗi tải danh sách Tỉnh/Thành phố. Vui lòng thử lại.";
-    provincesList.value = []; // Reset on error
+    console.error("Error loading provinces:", error);
+    addressModalError.value = "Lỗi tải danh sách Tỉnh/Thành phố.";
+    provincesList.value = [];
   } finally {
     provincesLoading.value = false;
   }
 };
 
 const fetchDistricts = async (provinceCode) => {
-  // If no province code, reset districts and wards
   if (!provinceCode) {
     districtsList.value = [];
     wardsList.value = [];
-    selectedDistrictCode.value = null; // Reset selection
+    selectedDistrictCode.value = null;
     selectedWardCode.value = null;
     return;
   }
   districtsLoading.value = true;
-  wardsList.value = []; // Reset wards when province changes
-  selectedDistrictCode.value = null; // Reset district selection
-  selectedWardCode.value = null;   // Reset ward selection
-  addressModalError.value = null; // Clear previous modal errors
+  wardsList.value = [];
+  selectedDistrictCode.value = null;
+  selectedWardCode.value = null;
+  addressModalError.value = null;
   try {
-    const response = await axios.get(`${PROVINCE_API_HOST}p/${provinceCode}?depth=2`);
-    districtsList.value = response.data?.districts || [];
+    // Find province in local data
+    const province = provinces.find(p => p.code.toString() === provinceCode);
+    if (province) {
+      districtsList.value = province.districts.map(d => ({
+        code: d.code.toString(),
+        name: d.name
+      }));
+    } else {
+      districtsList.value = [];
+    }
   } catch (error) {
-    console.error("Fetch Districts Error:", error);
-    addressModalError.value = "Lỗi tải danh sách Quận/Huyện. Vui lòng thử lại.";
-    districtsList.value = []; // Reset on error
+    console.error("Error loading districts:", error);
+    addressModalError.value = "Lỗi tải danh sách Quận/Huyện.";
+    districtsList.value = [];
   } finally {
     districtsLoading.value = false;
   }
 };
 
 const fetchWards = async (districtCode) => {
-  // If no district code, reset wards
   if (!districtCode) {
     wardsList.value = [];
-    selectedWardCode.value = null; // Reset selection
+    selectedWardCode.value = null;
     return;
   }
   wardsLoading.value = true;
-  selectedWardCode.value = null;   // Reset ward selection when district changes
-  addressModalError.value = null; // Clear previous modal errors
+  selectedWardCode.value = null;
+  addressModalError.value = null;
   try {
-    const response = await axios.get(`${PROVINCE_API_HOST}d/${districtCode}?depth=2`);
-    wardsList.value = response.data?.wards || [];
+    // Find district in local data
+    const province = provinces.find(p => 
+      p.districts.some(d => d.code.toString() === districtCode)
+    );
+    if (province) {
+      const district = province.districts.find(d => d.code.toString() === districtCode);
+      if (district) {
+        wardsList.value = district.wards.map(w => ({
+          code: w.code.toString(),
+          name: w.name
+        }));
+      } else {
+        wardsList.value = [];
+      }
+    } else {
+      wardsList.value = [];
+    }
   } catch (error) {
-    console.error("Fetch Wards Error:", error);
-    addressModalError.value = "Lỗi tải danh sách Phường/Xã. Vui lòng thử lại.";
-    wardsList.value = []; // Reset on error
+    console.error("Error loading wards:", error);
+    addressModalError.value = "Lỗi tải danh sách Phường/Xã.";
+    wardsList.value = [];
   } finally {
     wardsLoading.value = false;
   }
@@ -530,7 +537,6 @@ watch(selectedDistrictCode, (newDistrictCode) => {
   fetchWards(newDistrictCode);
 });
 
-// --- openAddressModal, closeAddressModal, handleSaveAddress logic remains the same ---
 const openAddressModal = async (address = null, index = null) => {
   addressModalError.value = null;
   // Reset dependent dropdowns and selections
@@ -654,8 +660,6 @@ const handleSaveAddress = () => {
     closeAddressModal(); // Close modal on successful add/update
 };
 
-
-// --- Formatting functions remain the same ---
 const formatGender = (gender) => {
     if (!gender) return '';
     switch (gender.toUpperCase()) {
@@ -727,8 +731,6 @@ const formatAddress = (address) => {
     return parts.join(', ');
 };
 
-
-// --- handleDateInput function remains the same ---
 const handleDateInput = (event) => {
   const value = event.target.value; // YYYY-MM-DD format from input type="date"
   if (value) {
@@ -745,14 +747,12 @@ const handleDateInput = (event) => {
   }
 };
 
-// --- NEW: Function to navigate to the change password page ---
 const goToChangePassword = () => {
     // Navigate to the named route 'change-password'.
     // Ensure you have defined this route in your Vue Router setup.
     router.push({ name: 'change-password' });
 };
 
-// --- onMounted remains largely the same, fetches user data ---
 onMounted(() => {
   // Initialize Bootstrap Modal for addresses
   if (addressModalRef.value) {

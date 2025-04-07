@@ -3,6 +3,28 @@
       <div class="card shadow-lg" style="width: 100%; max-width: 550px;">
         <div class="card-body p-4 p-md-5">
           <h2 class="card-title text-center mb-4">Đăng ký tài khoản</h2>
+  
+          <!-- Thêm nút đăng nhập bằng Google ở đầu form -->
+          <div class="d-grid mb-4">
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-lg d-flex align-items-center justify-content-center gap-2"
+              @click="goToLogin"
+            >
+              <img 
+                src="https://www.google.com/favicon.ico" 
+                alt="Google"
+                style="width: 20px; height: 20px;"
+              />
+              <span>Đăng nhập bằng tài khoản Google</span>
+            </button>
+          </div>
+  
+          <!-- Divider -->
+          <div class="divider d-flex align-items-center my-4">
+            <p class="text-center fw-bold mx-3 mb-0 text-muted">HOẶC</p>
+          </div>
+  
           <form @submit.prevent="handleRegister">
             <div v-if="error" class="alert alert-danger small p-2 mb-3" role="alert">
               {{ error }}
@@ -61,8 +83,10 @@
   import { ref, reactive } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
+  import { useAuthStore } from '@/stores/authStore';
   
   const router = useRouter();
+  const authStore = useAuthStore();
   
   // --- State ---
   const formData = reactive({
@@ -71,10 +95,10 @@
     username: '',
     email: '',
     phone: '',
-    gender: null, // <<== THÊM: Giá trị mặc định là null
-    birthday: null, // <<== THÊM: Giá trị mặc định là null (API cần ISO string, input type="date" chỉ trả về YYYY-MM-DD)
+    gender: null,
+    birthday: null,
     type: 'USER',
-    addresses: [] // <<== THÊM: Mảng rỗng cho địa chỉ
+    addresses: []
   });
   
   const loading = ref(false);
@@ -88,6 +112,11 @@
   });
   
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  
+  // Hàm chuyển hướng đến trang đăng nhập
+  const goToLogin = () => {
+    router.push({ name: 'login' });
+  };
   
   const handleRegister = async () => {
     error.value = null;
@@ -108,20 +137,17 @@
     const payload = { ...formData };
   
     // Xử lý birthday: API cần ISO string, input type="date" trả về 'YYYY-MM-DD'
-    // Nếu bạn dùng input date, bạn cần chuyển đổi nó hoặc đảm bảo API chấp nhận 'YYYY-MM-DD'
-    // Ví dụ đơn giản: nếu có giá trị thì thêm giờ phút giây mặc định (cần kiểm tra lại logic này)
-     if (payload.birthday) {
+    if (payload.birthday) {
          // Nếu input chỉ là YYYY-MM-DD, cách đơn giản nhất là gửi như vậy và hy vọng backend chấp nhận
          // Hoặc nếu backend bắt buộc ISO string:
          // payload.birthday = new Date(payload.birthday).toISOString(); // Chuyển thành ISO string
          // Tuy nhiên, nếu không nhập birthday thì payload.birthday là null, không cần chuyển đổi.
-     }
+    }
   
     // Đảm bảo gender là null nếu không chọn (nếu bạn dùng select input)
     if (payload.gender === null || payload.gender === '') {
         payload.gender = null; // Hoặc loại bỏ nếu API không cho phép null
     }
-  
   
     loading.value = true;
   
@@ -164,4 +190,11 @@
   .register-page { background-color: #f8f9fa; }
   .card { border: none; }
   .invalid-feedback { font-size: 0.875em; }
+  .divider:after,
+  .divider:before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #eee;
+  }
   </style>

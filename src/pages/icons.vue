@@ -1,0 +1,134 @@
+<template>
+  <div>
+    <v-row>
+      <v-col cols="12">
+        <v-card>
+          <v-card-title class="d-flex align-center">
+            <v-icon
+              icon="mdi-palette-outline"
+              class="me-3"
+            />
+            <span>Icons</span>
+          </v-card-title>
+
+          <v-card-text>
+            <div class="d-flex flex-wrap gap-4">
+              <v-card
+                v-for="icon in icons"
+                :key="icon"
+                class="d-flex flex-column align-center pa-4"
+                width="120"
+              >
+                <v-icon
+                  :icon="icon"
+                  size="32"
+                />
+                <span class="text-caption mt-2">{{ icon }}</span>
+              </v-card>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </div>
+</template>
+
+<script setup>
+const icons = [
+  'mdi-home',
+  'mdi-account',
+  'mdi-cog',
+  'mdi-logout',
+  'mdi-menu',
+  'mdi-close',
+  'mdi-chevron-right',
+  'mdi-chevron-left',
+  'mdi-chevron-up',
+  'mdi-chevron-down',
+  'mdi-plus',
+  'mdi-minus',
+  'mdi-check',
+  'mdi-close-circle',
+  'mdi-alert-circle',
+  'mdi-information',
+  'mdi-help-circle',
+  'mdi-star',
+  'mdi-star-outline',
+  'mdi-heart',
+  'mdi-heart-outline',
+  'mdi-cart',
+  'mdi-cart-outline',
+  'mdi-magnify',
+  'mdi-filter',
+  'mdi-sort',
+  'mdi-refresh',
+  'mdi-download',
+  'mdi-upload',
+  'mdi-printer',
+  'mdi-email',
+  'mdi-phone',
+  'mdi-map-marker',
+  'mdi-calendar',
+  'mdi-clock',
+  'mdi-bell',
+  'mdi-bell-outline',
+  'mdi-lock',
+  'mdi-lock-outline',
+  'mdi-eye',
+  'mdi-eye-off',
+  'mdi-pencil',
+  'mdi-delete',
+  'mdi-content-copy',
+  'mdi-content-cut',
+  'mdi-content-paste',
+  'mdi-link',
+  'mdi-link-variant',
+  'mdi-share',
+  'mdi-share-variant',
+  'mdi-dots-horizontal',
+  'mdi-dots-vertical',
+  'mdi-format-bold',
+  'mdi-format-italic',
+  'mdi-format-underline',
+  'mdi-format-list-bulleted',
+  'mdi-format-list-numbered',
+  'mdi-format-align-left',
+  'mdi-format-align-center',
+  'mdi-format-align-right',
+  'mdi-format-align-justify',
+  'mdi-format-color-text',
+  'mdi-format-color-fill',
+  'mdi-format-size',
+  'mdi-format-line-spacing',
+  'mdi-format-indent-increase',
+  'mdi-format-indent-decrease',
+  'mdi-format-quote-close',
+  'mdi-format-clear',
+  'mdi-format-strikethrough',
+  'mdi-format-subscript',
+  'mdi-format-superscript',
+  'mdi-format-header-1',
+  'mdi-format-header-2',
+  'mdi-format-header-3',
+  'mdi-format-header-4',
+  'mdi-format-header-5',
+  'mdi-format-header-6',
+  'mdi-format-paragraph',
+  'mdi-format-text',
+  'mdi-format-textbox',
+  'mdi-format-title',
+  'mdi-format-wrap-inline',
+  'mdi-format-wrap-square',
+  'mdi-format-wrap-tight',
+  'mdi-format-wrap-top-bottom',
+  'mdi-format-vertical-align-top',
+  'mdi-format-vertical-align-center',
+  'mdi-format-vertical-align-bottom',
+  'mdi-format-horizontal-align-left',
+  'mdi-format-horizontal-align-center',
+  'mdi-format-horizontal-align-right',
+  'mdi-format-float-left',
+  'mdi-format-float-center',
+  'mdi-format-float-right',
+]
+</script> 

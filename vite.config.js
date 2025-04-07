@@ -1,17 +1,30 @@
 // vite.config.js
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import path from 'path'; // Đảm bảo bạn đã import path
+import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
-  plugins: [vue()],
-  resolve: { // <-- Thêm hoặc cập nhật phần này
+  plugins: [
+    vue({
+      template: {
+        transformAssetUrls: {
+          base: null,
+          includeAbsolute: false,
+        },
+      },
+    }),
+  ],
+  resolve: {
     alias: {
-      // Dòng này định nghĩa '@' sẽ trỏ đến thư mục 'src'
-      '@': path.resolve(__dirname, './src'),
-      // Hoặc dùng cách này nếu không có __dirname (khuyến nghị cho Vite mới hơn)
-      // '@': new URL('./src', import.meta.url).pathname
-    }
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "vuetify/styles" as *;`,
+      },
+    },
   },
   // Các cấu hình khác của bạn có thể giữ nguyên...
 
