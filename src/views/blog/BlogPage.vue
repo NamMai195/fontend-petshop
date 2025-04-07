@@ -45,48 +45,68 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase/config';
-import BlogPostCard from '../components/UI/BlogPostCard.vue';
+import BlogPostCard from '@/components/common/BlogPostCard.vue';
+
+// Debug Firebase connection
+console.log('Firebase db instance:', db);
 
 const BLOG_COLLECTION_NAME = 'blogPosts';
-
-// Lấy instance của router
-const router = useRouter();
+console.log('Using collection:', BLOG_COLLECTION_NAME);
 
 const posts = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
 const fetchAllPosts = async () => {
+  console.log('Starting to fetch posts...');
   loading.value = true;
   error.value = null;
   const fetchedPosts = [];
 
   try {
     const postsCollectionRef = collection(db, BLOG_COLLECTION_NAME);
-    const q = query(postsCollectionRef, orderBy('createdAt', 'desc'));
+    console.log('Collection Reference:', postsCollectionRef);
 
-    console.log(`[BlogPage] Đang lấy tất cả bài viết từ collection '${BLOG_COLLECTION_NAME}'...`);
+    const q = query(postsCollectionRef, orderBy('createdAt', 'desc'));
+    console.log('Query:', q);
+
+    console.log('Executing query...');
     const querySnapshot = await getDocs(q);
+    console.log('Query completed. Documents found:', querySnapshot.size);
+
+    if (querySnapshot.empty) {
+      console.log('No documents found in collection');
+    }
 
     querySnapshot.forEach((doc) => {
+      console.log('Processing document:', doc.id);
       const data = doc.data();
-      fetchedPosts.push({
+      console.log('Document data:', data);
+      
+      const post = {
         id: doc.id,
-        title: data.title || 'Tiêu đề không có',
-        excerpt: data.excerpt || '',
+        title: data.title || 'Untitled',
+        content: data.content || '',
+        excerpt: data.excerpt || data.content?.substring(0, 150) || '',
         imageUrl: data.imageUrl || null,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : null,
-        slug: data.slug || null
-      });
+        author: data.author || 'Anonymous',
+        status: data.status || 'Draft'
+      };
+      console.log('Processed post:', post);
+      fetchedPosts.push(post);
     });
 
+    console.log('Total posts processed:', fetchedPosts.length);
     posts.value = fetchedPosts;
-    console.log(`[BlogPage] Đã tải ${fetchedPosts.length} bài viết.`);
 
   } catch (err) {
-    console.error("[BlogPage] Lỗi khi lấy danh sách bài viết:", err);
-    error.value = 'Không thể tải danh sách bài viết. Vui lòng thử lại sau.';
-     console.error("[BlogPage] Chi tiết lỗi:", JSON.stringify(err, null, 2));
+    console.error("Error details:", {
+      message: err.message,
+      code: err.code,
+      stack: err.stack
+    });
+    error.value = `Error: ${err.message}`;
   } finally {
     loading.value = false;
   }
@@ -98,7 +118,9 @@ const goBack = () => {
   // Hoặc router.go(-1);
 };
 
+// Call fetchAllPosts when component mounts
 onMounted(() => {
+  console.log('Component mounted, fetching posts...');
   fetchAllPosts();
 });
 </script>

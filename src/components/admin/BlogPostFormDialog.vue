@@ -13,8 +13,7 @@
                 <v-text-field
                   v-model="editablePost.title"
                   label="Title*"
-                  :rules="[rules.required]"
-                  required
+                  :rules="[rules.title]"
                   variant="outlined"
                   density="compact"
                 ></v-text-field>
@@ -23,8 +22,7 @@
                 <v-text-field
                   v-model="editablePost.author"
                   label="Author*"
-                  :rules="[rules.required]"
-                  required
+                  :rules="[rules.author]"
                   variant="outlined"
                   density="compact"
                 ></v-text-field>
@@ -34,8 +32,7 @@
                     v-model="editablePost.status"
                     :items="['Draft', 'Published']"
                     label="Status*"
-                    :rules="[rules.required]"
-                    required
+                    :rules="[rules.status]"
                     variant="outlined"
                     density="compact"
                   ></v-select>
@@ -44,6 +41,7 @@
                 <v-textarea
                   v-model="editablePost.content"
                   label="Content"
+                  :rules="[rules.content]"
                   variant="outlined"
                   rows="5"
                   auto-grow
@@ -94,8 +92,8 @@
 import { ref, watch, computed, nextTick } from 'vue';
 
 const props = defineProps({
-  modelValue: Boolean, // Controls dialog visibility (v-model)
-  post: { // The post object to edit, or null/undefined for adding
+  modelValue: Boolean,
+  post: {
     type: Object,
     default: null,
   },
@@ -103,73 +101,83 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save']);
 
-const formRef = ref(null); // Reference to the v-form
-const editablePost = ref({});
-const isSaving = ref(false);
-const selectedImageFile = ref(null); // Holds the File object
-const imagePreviewUrl = ref(null); // Holds the local preview URL
-
-const isEditing = computed(() => !!props.post?.id);
-
-// Validation rules
+// Form refs and validation rules
+const formRef = ref(null);
 const rules = {
-  required: value => !!value || 'This field is required.',
+  title: [v => isEditing.value || (!!v && v.length > 0) || 'Title is required'],
+  author: [v => isEditing.value || (!!v && v.length > 0) || 'Author is required'],
+  content: [v => isEditing.value || (!!v && v.length > 0) || 'Content is required'],
+  status: [v => isEditing.value || (!!v && v.length > 0) || 'Status is required'],
 };
 
-// Watch for the dialog opening and initialize the form data
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    // Reset form validation when dialog opens
-    nextTick(() => {
-      formRef.value?.resetValidation();
-    });
-    if (isEditing.value) {
-      // Clone the post prop to avoid mutating it directly
+// Form data
+const editablePost = ref({
+  title: '',
+  author: '',
+  content: '',
+  status: 'Draft',
+  imageUrl: null,
+});
+
+// Image handling
+const selectedImageFile = ref(null);
+const imagePreviewUrl = ref(null);
+const isSaving = ref(false);
+
+const isEditing = computed(() => !!props.post);
+
+// Reset form when dialog opens/closes
+watch(() => props.modelValue, async (newVal) => {
+  if (newVal) {
+    // Dialog opened
+    if (props.post) {
+      // Edit mode - populate form with post data
       editablePost.value = { ...props.post };
     } else {
-      // Reset for adding a new post
-      editablePost.value = { title: '', author: '', content: '', status: 'Draft', imageUrl: null };
+      // Add mode - reset form
+      editablePost.value = {
+        title: '',
+        author: '',
+        content: '',
+        status: 'Draft',
+        imageUrl: null,
+      };
     }
-    // Clear previous file selection and preview
     selectedImageFile.value = null;
     imagePreviewUrl.value = null;
+    
+    // Wait for form to be ready
+    await nextTick();
+    if (formRef.value) {
+      formRef.value.resetValidation();
+    }
   }
 });
 
-// Generate a local preview URL when a file is selected
-const previewImage = () => {
-  if (selectedImageFile.value && selectedImageFile.value.length > 0) {
-    const file = selectedImageFile.value[0]; // v-file-input returns an array
-    if (file && file.type.startsWith('image/')) {
-      imagePreviewUrl.value = URL.createObjectURL(file);
-    } else {
-      // Handle non-image file selection if necessary
-      selectedImageFile.value = null;
-      imagePreviewUrl.value = null;
-      alert('Please select a valid image file.');
+const previewImage = (event) => {
+  const file = selectedImageFile.value;
+  if (file) {
+    // Clear previous preview
+    if (imagePreviewUrl.value) {
+      URL.revokeObjectURL(imagePreviewUrl.value);
     }
-  } else {
-     imagePreviewUrl.value = null; // Clear preview if file is cleared
+    // Create new preview
+    imagePreviewUrl.value = URL.createObjectURL(file);
   }
 };
 
-// Clear preview when file input is cleared
 const clearPreview = () => {
-  imagePreviewUrl.value = null;
-  selectedImageFile.value = null; // Ensure file ref is also cleared
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value);
+    imagePreviewUrl.value = null;
+  }
+  selectedImageFile.value = null;
 };
 
-// Revoke the object URL when the component is unmounted or preview changes
+// Cleanup when component unmounts
 watch(imagePreviewUrl, (newUrl, oldUrl) => {
   if (oldUrl) {
     URL.revokeObjectURL(oldUrl);
-  }
-});
-// Also revoke on unmount
-import { onUnmounted } from 'vue';
-onUnmounted(() => {
-  if (imagePreviewUrl.value) {
-    URL.revokeObjectURL(imagePreviewUrl.value);
   }
 });
 
@@ -178,40 +186,48 @@ const closeDialog = () => {
 };
 
 const savePost = async () => {
-  // Validate the form
-  const { valid } = await formRef.value?.validate();
-  if (!valid) {
-    return; // Don't proceed if validation fails
+  if (!isEditing.value && !(await formRef.value.validate())) {
+    return;
   }
 
   isSaving.value = true;
   try {
-    // Emit the save event with the post data AND the selected image file
-    const fileToSave = selectedImageFile.value ? selectedImageFile.value[0] : null;
-    emit('save', { postData: { ...editablePost.value }, imageFile: fileToSave });
-    // The parent component will handle the API call and closing the dialog on success
+    if (isEditing.value) {
+      // Khi edit, chỉ gửi các trường đã được điền
+      const updateData = {};
+      if (editablePost.value.title) updateData.title = editablePost.value.title;
+      if (editablePost.value.author) updateData.author = editablePost.value.author;
+      if (editablePost.value.content) updateData.content = editablePost.value.content;
+      if (editablePost.value.status) updateData.status = editablePost.value.status;
+      
+      // Emit save event with post data and image file
+      emit('save', {
+        postData: updateData,
+        imageFile: selectedImageFile.value
+      });
+    } else {
+      // Khi tạo mới, yêu cầu đầy đủ thông tin
+      // Emit save event with post data and image file
+      emit('save', {
+        postData: editablePost.value,
+        imageFile: selectedImageFile.value
+      });
+    }
+    // Close dialog
+    closeDialog();
   } catch (error) {
-    // Handle potential errors during emit or if logic was here
-    console.error("Error preparing save:", error);
-    // Reset saving state here if parent doesn't handle it on error
-    isSaving.value = false;
+    console.error('Error saving post:', error);
   } finally {
-     // We let the parent decide when to stop loading and close
-     // isSaving.value = false; // Usually controlled by parent after API call
+    isSaving.value = false;
   }
 };
 
-// Expose isSaving for parent component if needed (e.g., to reset it after API call)
+// Expose isSaving for parent component
 defineExpose({ isSaving });
-
 </script>
 
 <style scoped>
-/* Add any specific styles for the dialog here */
-.v-card-title {
-  border-bottom: 1px solid #eee;
-}
-.v-card-actions {
-  border-top: 1px solid #eee;
+.v-card-text {
+  padding-top: 0;
 }
 </style>

@@ -44,23 +44,24 @@ const props = defineProps({
   }
 });
 
+// Định dạng ngày tháng từ JS Date (đã được chuyển đổi từ Firestore Timestamp)
+const formattedDate = computed(() => {
+  if (!props.post.createdAt) return null;
+  
+  const date = props.post.createdAt;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  return {
+    day: date.getDate(),
+    month: months[date.getMonth()]
+  };
+});
+
 // Tạo link chi tiết bài viết bằng ID
 const postLink = computed(() => `/blog/post/${props.post.id}`);
 
-// Định dạng ngày tháng từ JS Date (đã được chuyển đổi từ Firestore Timestamp)
-const formattedDate = computed(() => {
-  if (!props.post.createdAt || !(props.post.createdAt instanceof Date)) {
-    return null;
-  }
-  const date = props.post.createdAt;
-  const day = date.getDate();
-  const month = date.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-  return { day, month };
-});
-
 // Xử lý khi ảnh bài viết bị lỗi
 const handleImageError = (event) => {
-  // QUAN TRỌNG: Đảm bảo bạn có ảnh placeholder này
   event.target.src = '/src/assets/images/logo.png';
 };
 </script>

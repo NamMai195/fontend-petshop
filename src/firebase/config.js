@@ -17,14 +17,28 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug Firebase configuration
+console.log('Firebase Config:', {
+  ...firebaseConfig,
+  apiKey: firebaseConfig.apiKey ? '**exists**' : '**missing**',
+  messagingSenderId: firebaseConfig.messagingSenderId ? '**exists**' : '**missing**',
+  appId: firebaseConfig.appId ? '**exists**' : '**missing**'
+});
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+console.log('Firebase app initialized:', app.name);
 
 // Initialize services
 export const analytics = getAnalytics(app);
 export const db = getFirestore(app);
+console.log('Firestore initialized');
+
 export const storage = getStorage(app);
+console.log('Storage initialized');
+
 export const rtdb = getDatabase(app);
+console.log('Realtime Database initialized');
 
 // Export the app instance as well
 export default app;

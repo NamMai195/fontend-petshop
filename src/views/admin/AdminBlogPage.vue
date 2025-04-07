@@ -1,242 +1,451 @@
 <template>
-  <v-container fluid>
-    <v-card>
-      <v-card-title class="d-flex align-center pe-2">
-        <v-icon icon="mdi-post"></v-icon> &nbsp;
-        Blog Management
-
-        <v-spacer></v-spacer>
-
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="addPost">
-          Add New Post
-        </v-btn>
-      </v-card-title>
-
-      <v-divider></v-divider>
-
-      <v-card-text>
-        <div v-if="isLoading" class="text-center pa-4">
-          <v-progress-circular indeterminate color="primary"></v-progress-circular>
-          <p class="mt-2">Loading posts...</p>
+  <VContainer fluid>
+    <VCard>
+      <VCardText>
+        <div class="d-flex justify-space-between align-center mb-4">
+          <div>
+            <h4 class="text-h4">Blog Posts</h4>
+            <p class="text-subtitle-1 text-medium-emphasis">
+              {{ loading ? 'Loading...' : `${totalItems} posts found` }}
+            </p>
+          </div>
+          <VBtn
+            prepend-icon="mdi-plus"
+            color="primary"
+            @click="openCreateDialog"
+            :loading="loading"
+          >
+            ADD POST
+          </VBtn>
         </div>
 
-        <v-alert v-else-if="error" type="error" prominent border="start" class="mb-4">
-          {{ error }}
-        </v-alert>
+        <VRow class="mb-4">
+          <VCol cols="12" md="6">
+            <VTextField
+              v-model="searchQuery"
+              label="Search posts..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              @click:clear="searchQuery = ''"
+            />
+          </VCol>
+        </VRow>
 
-        <v-alert v-else-if="posts.length === 0" type="info" variant="tonal" class="mb-4">
-          No blog posts found. Click "Add New Post" to create one.
-        </v-alert>
+        <VDataTable
+          :headers="headers"
+          :items="posts"
+          :loading="loading"
+          class="elevation-1"
+        >
+          <template #loading>
+            <VSkeletonLoader
+              type="table-row"
+              :loading="loading"
+              :types="{
+                'table-row': {
+                  height: '64px',
+                  rows: 5
+                }
+              }"
+            />
+          </template>
 
-        <v-table v-else fixed-header hover>
-          <thead>
-            <tr>
-              <th class="text-left" style="width: 50px;">Image</th>
-              <th class="text-left">ID</th>
-              <th class="text-left">Title</th>
-              <th class="text-left">Author</th>
-              <th class="text-left">Created At</th>
-              <th class="text-left">Status</th>
-              <th class="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="post in posts" :key="post.id">
-               <td>
-                 <v-img
-                   v-if="post.imageUrl"
-                   :src="post.imageUrl"
-                   :alt="post.title"
-                   height="40"
-                   width="40"
-                   cover
-                   class="my-1"
-                 ></v-img>
-                 <v-icon v-else size="small" class="text-grey">mdi-image-off</v-icon>
-               </td>
-              <td>{{ post.id.substring(0, 6) }}...</td> <!-- Show partial ID -->
-              <td>{{ post.title }}</td>
-              <td>{{ post.author }}</td>
-              <td>{{ post.createdAt }}</td>
-              <td>
-                <v-chip :color="post.status === 'Published' ? 'success' : 'warning'" size="small" label>
-                  {{ post.status }}
-                </v-chip>
-              </td>
-              <td class="text-center">
-                <v-btn
-                  icon="mdi-pencil"
-                  variant="text"
-                  color="info"
-                  size="small"
-                  @click="editPost(post.id)"
-                  class="me-2"
-                >
-                  <v-icon>mdi-pencil</v-icon>
-                   <v-tooltip activator="parent" location="top">Edit</v-tooltip>
-                </v-btn>
-                <v-btn
-                  icon="mdi-delete"
-                  variant="text"
-                  color="error"
-                  size="small"
-                  @click="deletePost(post.id)"
-                >
-                 <v-icon>mdi-delete</v-icon>
-                  <v-tooltip activator="parent" location="top">Delete</v-tooltip>
-                </v-btn>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </v-card-text>
-    </v-card>
+          <template #no-data>
+            <div class="d-flex flex-column align-center pa-4">
+              <VIcon
+                icon="mdi-database-off"
+                size="48"
+                color="grey-lighten-1"
+                class="mb-2"
+              />
+              <div class="text-subtitle-1 text-medium-emphasis">
+                No posts found
+              </div>
+              <div class="text-caption text-medium-emphasis mb-2">
+                Try adjusting your search to find what you're looking for.
+              </div>
+              <VBtn
+                color="primary"
+                variant="text"
+                @click="resetFilters"
+              >
+                Clear filters
+              </VBtn>
+            </div>
+          </template>
 
-    <!-- Add/Edit Dialog -->
-    <BlogPostFormDialog
-      v-model="dialogVisible"
-      :post="currentPost"
-      @save="handleSavePost"
-      ref="blogDialogRef"
-    />
+          <template #item.image="{ item }">
+            <VImg
+              :src="item.imageUrl || '/placeholder-image.png'"
+              height="50"
+              width="50"
+              cover
+              class="rounded"
+              :lazy-src="'/placeholder-image.png'"
+            >
+              <template #placeholder>
+                <VSkeletonLoader
+                  type="image"
+                  height="50"
+                  width="50"
+                />
+              </template>
+            </VImg>
+          </template>
+          <template #item.createdAt="{ item }">
+            {{ item.createdAt }}
+          </template>
+          <template #item.actions="{ item }">
+            <VBtn
+              icon
+              variant="text"
+              color="primary"
+              size="small"
+              @click="openEditDialog(item)"
+            >
+              <VIcon icon="mdi-pencil" />
+            </VBtn>
+            <VBtn
+              icon
+              variant="text"
+              color="error"
+              size="small"
+              @click="confirmDelete(item)"
+            >
+              <VIcon icon="mdi-delete" />
+            </VBtn>
+          </template>
+        </VDataTable>
+      </VCardText>
+    </VCard>
 
-  </v-container>
+    <!-- Blog Post Form Dialog -->
+    <VDialog v-model="dialog" max-width="800px" persistent>
+      <VCard>
+        <VCardTitle class="text-h5 pa-4">
+          {{ isEditing ? 'Edit Blog Post' : 'Add New Blog Post' }}
+        </VCardTitle>
+        <VCardText class="pa-4">
+          <VForm ref="form" @submit.prevent="handleSubmit">
+            <VRow>
+              <VCol cols="12">
+                <VTextField
+                  v-model="formData.title"
+                  label="Title"
+                  :rules="[v => !!v || 'Title is required']"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextField
+                  v-model="formData.author"
+                  label="Author"
+                  :rules="[v => !!v || 'Author is required']"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VSelect
+                  v-model="formData.status"
+                  :items="['Draft', 'Published']"
+                  label="Status"
+                  :rules="[v => !!v || 'Status is required']"
+                  required
+                />
+              </VCol>
+              <VCol cols="12">
+                <VTextarea
+                  v-model="formData.content"
+                  label="Content"
+                  :rules="[v => !!v || 'Content is required']"
+                  required
+                  rows="5"
+                  auto-grow
+                />
+              </VCol>
+              <VCol cols="12">
+                <VFileInput
+                  v-model="formData.image"
+                  label="Featured Image"
+                  accept="image/*"
+                  :rules="[v => !!v || 'Image is required']"
+                  required
+                  @change="handleFileChange"
+                />
+              </VCol>
+              <VCol cols="12" v-if="imagePreview">
+                <div class="image-preview-container">
+                  <VImg 
+                    :src="imagePreview" 
+                    width="150" 
+                    height="150" 
+                    cover 
+                    class="rounded elevation-2"
+                  >
+                    <template v-slot:placeholder>
+                      <div class="d-flex align-center justify-center fill-height">
+                        <VProgressCircular indeterminate color="primary" />
+                      </div>
+                    </template>
+                  </VImg>
+                  <div class="image-actions">
+                    <VBtn
+                      icon="mdi-delete"
+                      size="small"
+                      color="error"
+                      variant="tonal"
+                      @click="clearImage"
+                    />
+                  </div>
+                </div>
+              </VCol>
+            </VRow>
+          </VForm>
+        </VCardText>
+        <VDivider />
+        <VCardActions class="pa-4">
+          <VSpacer />
+          <VBtn variant="tonal" @click="dialog = false" :disabled="saving">Cancel</VBtn>
+          <VBtn
+            color="primary"
+            @click="handleSubmit"
+            :loading="saving"
+            :disabled="saving"
+          >
+            {{ isEditing ? 'Update' : 'Create' }}
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <VDialog v-model="deleteDialog" max-width="400px">
+      <VCard>
+        <VCardTitle class="text-h5 pa-4">Confirm Delete</VCardTitle>
+        <VCardText class="pa-4">
+          Are you sure you want to delete this blog post? This action cannot be undone.
+        </VCardText>
+        <VDivider />
+        <VCardActions class="pa-4">
+          <VSpacer />
+          <VBtn variant="tonal" @click="deleteDialog = false" :disabled="deleting">Cancel</VBtn>
+          <VBtn
+            color="error"
+            @click="handleDelete"
+            :loading="deleting"
+            :disabled="deleting"
+          >
+            Delete
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+  </VContainer>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import blogApiService from '@/api/blog'; // Import the created API service
-import BlogPostFormDialog from '@/components/admin/BlogPostFormDialog.vue'; // Import the dialog component
+import { ref, onMounted, watch } from 'vue';
+import { useToast } from 'vue-toastification';
+import blogApiService from '@/api/blog';
 
+const toast = useToast();
+
+// State
 const posts = ref([]);
-const isLoading = ref(true);
-const error = ref(null);
-const dialogVisible = ref(false);
-const currentPost = ref(null); // Holds the post being edited, null for adding
-const blogDialogRef = ref(null); // Ref to access dialog's isSaving state if needed
+const searchQuery = ref('');
+const loading = ref(false);
+const dialog = ref(false);
+const deleteDialog = ref(false);
+const isEditing = ref(false);
+const selectedPost = ref(null);
+const form = ref(null);
+const saving = ref(false);
+const deleting = ref(false);
+const imagePreview = ref(null);
+const totalItems = ref(0);
 
+// Form data
+const formData = ref({
+  title: '',
+  author: '',
+  content: '',
+  status: 'Draft',
+  image: null
+});
+
+// Table headers
+const headers = [
+  { title: 'Image', key: 'image', sortable: false },
+  { title: 'Title', key: 'title', sortable: true },
+  { title: 'Author', key: 'author', sortable: true },
+  { title: 'Status', key: 'status', sortable: true },
+  { title: 'Created At', key: 'createdAt', sortable: true },
+  { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+];
+
+// Watch for search changes
+const debouncedSearch = ref(null);
+watch(searchQuery, () => {
+  if (debouncedSearch.value) clearTimeout(debouncedSearch.value);
+  debouncedSearch.value = setTimeout(() => {
+    fetchPosts();
+  }, 500);
+});
+
+// Methods
 const fetchPosts = async () => {
-  isLoading.value = true;
-  error.value = null;
+  loading.value = true;
   try {
-    // Fetch blog posts from Firebase
-    posts.value = await blogApiService.getPosts();
-  } catch (err) {
-    console.error('Error fetching blog posts in component:', err);
-    // Display a more detailed error message if available
-    error.value = err.message || 'Failed to load blog posts. Check console for details.';
+    const fetchedPosts = await blogApiService.getPosts();
+    posts.value = fetchedPosts;
+    totalItems.value = fetchedPosts.length;
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    toast.error('Failed to fetch posts');
   } finally {
-    isLoading.value = false;
+    loading.value = false;
   }
 };
 
-onMounted(fetchPosts);
+const resetForm = () => {
+  formData.value = {
+    title: '',
+    author: '',
+    content: '',
+    status: 'Draft',
+    image: null
+  };
+  imagePreview.value = null;
+  if (form.value) {
+    form.value.resetValidation();
+  }
+};
 
-// --- Dialog Handling ---
-const openAddDialog = () => {
-  currentPost.value = null; // Ensure we are in "add" mode
-  dialogVisible.value = true;
+const openCreateDialog = () => {
+  isEditing.value = false;
+  selectedPost.value = null;
+  resetForm();
+  dialog.value = true;
 };
 
 const openEditDialog = (post) => {
-  currentPost.value = { ...post }; // Pass a copy of the post to the dialog
-  dialogVisible.value = true;
+  isEditing.value = true;
+  selectedPost.value = post;
+  formData.value = {
+    title: post.title,
+    author: post.author,
+    content: post.content,
+    status: post.status,
+    image: null
+  };
+  imagePreview.value = post.imageUrl;
+  dialog.value = true;
 };
 
-// Note: The dialog now emits { postData, imageFile }
-const handleSavePost = async ({ postData, imageFile }) => {
-  const isEditing = !!postData.id;
-  // Extract ID for update, remove it from payload for create/update consistency if needed by API
-  const postId = postData.id;
-  const payload = { ...postData };
-  delete payload.id; // Firestore functions handle ID separately
+const confirmDelete = (post) => {
+  selectedPost.value = post;
+  deleteDialog.value = true;
+};
 
+const handleFileChange = (event) => {
+  const file = formData.value.image;
+  if (file && file instanceof File) {
+    imagePreview.value = URL.createObjectURL(file);
+  }
+};
+
+const clearImage = () => {
+  formData.value.image = null;
+  if (imagePreview.value) {
+    URL.revokeObjectURL(imagePreview.value);
+  }
+  imagePreview.value = isEditing.value ? selectedPost.value.imageUrl : null;
+};
+
+const handleSubmit = async () => {
+  if (!form.value) return;
+  
+  const { valid } = await form.value.validate();
+  if (!valid) return;
+
+  saving.value = true;
   try {
-    if (isEditing) {
-      // Pass existing image URL for potential deletion during update
-      const existingImageUrl = posts.value.find(p => p.id === postId)?.imageUrl || null;
-      await blogApiService.updatePost(postId, payload, imageFile, existingImageUrl);
+    if (isEditing.value) {
+      await blogApiService.updatePost(
+        selectedPost.value.id,
+        formData.value,
+        formData.value.image
+      );
+      toast.success('Blog post updated successfully');
     } else {
-      await blogApiService.createPost(payload, imageFile);
+      await blogApiService.createPost(formData.value, formData.value.image);
+      toast.success('Blog post created successfully');
     }
 
-    dialogVisible.value = false; // Close dialog on success
-    await fetchPosts(); // Refresh the list from Firebase
-    // Optionally show a success notification
-  } catch (err) {
-    console.error(`Error ${isEditing ? 'updating' : 'creating'} post:`, err);
-    error.value = `Failed to ${isEditing ? 'update' : 'create'} post.`; // Show error in main page for now
-    // Optionally show an error notification within the dialog or main page
+    dialog.value = false;
+    resetForm();
+    fetchPosts();
+  } catch (error) {
+    console.error('Error saving post:', error);
+    toast.error('Failed to save post');
   } finally {
-    // Ensure loading state in dialog is reset if it's exposed and used
-     if (blogDialogRef.value) {
-       blogDialogRef.value.isSaving = false;
-     }
+    saving.value = false;
   }
 };
 
-// --- Action Button Handlers ---
-const addPost = () => {
-  openAddDialog();
-};
+const handleDelete = async () => {
+  if (!selectedPost.value) return;
 
-const editPost = (postId) => {
-  const postToEdit = posts.value.find(p => p.id === postId);
-  if (postToEdit) {
-    openEditDialog(postToEdit);
-  } else {
-    console.error(`Post with ID ${postId} not found for editing.`);
-    error.value = 'Could not find the selected post to edit.';
+  deleting.value = true;
+  try {
+    await blogApiService.deletePost(selectedPost.value.id);
+    toast.success('Blog post deleted successfully');
+    deleteDialog.value = false;
+    fetchPosts();
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    toast.error('Failed to delete post');
+  } finally {
+    deleting.value = false;
   }
 };
 
-const deletePost = async (postId) => {
-  const postToDelete = posts.value.find(p => p.id === postId);
-  if (!postToDelete) {
-     error.value = 'Could not find the selected post to delete.';
-     return;
-  }
-
-  if (confirm(`Are you sure you want to delete post "${postToDelete.title}" (ID: ${postId})?`)) {
-    try {
-      // Pass the image URL to the delete function for storage cleanup
-      await blogApiService.deletePost(postId, postToDelete.imageUrl);
-      await fetchPosts(); // Refresh the list after successful deletion from backend
-    } catch (err) {
-      console.error(`Error deleting post ${postId}:`, err);
-      error.value = 'Failed to delete post.';
-    }
-  }
+const resetFilters = () => {
+  searchQuery.value = '';
 };
+
+// Cleanup on unmount
+onMounted(() => {
+  fetchPosts();
+});
 </script>
 
 <style scoped>
-/* Scoped styles specific to this component */
-.v-card-title {
-  font-weight: 500;
+.image-preview-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
 }
 
-.v-table th {
-  font-weight: bold; /* Make table headers bold */
+.image-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
-.text-center {
-  text-align: center;
-}
-
-.pa-4 {
-  padding: 16px;
-}
-
-.mt-2 {
-  margin-top: 8px;
-}
-
-.mb-4 {
-  margin-bottom: 16px;
-}
-
-.me-2 {
- margin-right: 8px;
+.image-preview-container:hover .image-actions {
+  opacity: 1;
 }
 </style>

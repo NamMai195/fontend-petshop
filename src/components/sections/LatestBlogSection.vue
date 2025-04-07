@@ -44,9 +44,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
-// QUAN TRỌNG: Đảm bảo đường dẫn đến file config Firebase đúng
 import { db } from '@/firebase/config';
 import BlogPostCard from '@/components/common/BlogPostCard.vue';
+
+const BLOG_COLLECTION = 'blogPosts';
 
 const posts = ref([]);
 const loading = ref(true);
@@ -58,28 +59,40 @@ const fetchLatestPosts = async () => {
   const tempPosts = [];
 
   try {
-    // QUAN TRỌNG: Đổi 'blogPosts' nếu tên collection khác
-    const postsCollectionRef = collection(db, 'blogPosts');
-    // Lấy 3 bài mới nhất sắp xếp theo 'createdAt' (phải là kiểu Timestamp trong Firestore)
+    console.log('Fetching latest posts from collection:', BLOG_COLLECTION);
+    const postsCollectionRef = collection(db, BLOG_COLLECTION);
+    
     const q = query(postsCollectionRef, orderBy('createdAt', 'desc'), limit(3));
+    console.log('Query created:', q);
 
     const querySnapshot = await getDocs(q);
+    console.log('Documents found:', querySnapshot.size);
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      console.log('Processing document:', doc.id, data);
+      
       tempPosts.push({
         id: doc.id,
         title: data.title || 'No Title',
         excerpt: data.excerpt || '',
+        content: data.content || '',
         imageUrl: data.imageUrl || null,
         createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : null,
-        // slug: data.slug // Thêm nếu có slug
+        author: data.author || 'Anonymous',
+        status: data.status || 'Published'
       });
     });
+    
+    console.log('Posts processed:', tempPosts.length);
     posts.value = tempPosts;
 
   } catch (err) {
-    console.error("Error fetching latest blog posts:", err);
+    console.error("Error fetching latest blog posts:", {
+      code: err.code,
+      message: err.message,
+      stack: err.stack
+    });
     error.value = 'Failed to load blog posts.';
   } finally {
     loading.value = false;
@@ -87,6 +100,7 @@ const fetchLatestPosts = async () => {
 };
 
 onMounted(() => {
+  console.log('LatestBlogSection mounted, fetching posts...');
   fetchLatestPosts();
 });
 </script>
