@@ -32,6 +32,7 @@ const OrderDetailPage = () => import('@/views/orders/OrderDetailPage.vue');
 const AdminDashboardPage = () => import('@/views/admin/AdminDashboardPage.vue');
 const AdminProductPage = () => import('@/views/admin/AdminProductPage.vue'); // Trang products của Nam
 const AdminCategoryPage = () => import('@/views/admin/AdminCategoryPage.vue'); // Trang categories
+const AdminBlogPage = () => import('@/views/admin/AdminBlogPage.vue'); // Trang quản lý blog
 // const AdminProductListPage = () => import('@/views/admin/AdminProductListPage.vue'); // Import cũ, có thể không cần nếu dùng AdminProductPage
 
 // --- Sneat Page Imports (Dùng alias @, đảm bảo thư mục src/pages tồn tại nếu dùng) ---
@@ -101,6 +102,16 @@ const routes = [
         path: 'users',
         name: 'admin-users',
         component: () => import('@/views/admin/UserManagementPage.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresAdmin: true,
+          layout: 'admin'
+        }
+      },
+      {
+        path: 'blogs', // Đường dẫn cho trang quản lý blog
+        name: 'admin-blogs', // Tên route cho trang quản lý blog
+        component: AdminBlogPage,
         meta: {
           requiresAuth: true,
           requiresAdmin: true,

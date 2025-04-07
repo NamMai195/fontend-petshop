@@ -41,4 +41,11 @@ export default [
     action: 'read',
     subject: 'admin',
   },
-] 
+  {
+    title: 'Blog Management',
+    icon: { icon: 'mdi-post' }, // Using mdi-post icon for blogs
+    to: { name: 'admin-blogs' }, // Route name defined in router/index.js
+    action: 'read',
+    subject: 'admin',
+  },
+]
